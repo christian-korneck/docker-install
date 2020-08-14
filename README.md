@@ -1,3 +1,24 @@
+# about this fork
+
+this is a quick hack of the Docker install script to work around the [broken](https://github.com/docker/for-linux/issues/955) installation on Fedora 32 via the following workarounds:
+- install packages from Docker fc31 repo (as there's currently no fc32 repo)
+- `firewalld` backend: `nftables` -> `iptables` (if installed)
+- kernel cmdline: cgroups v1
+
+Alternatives:
+- [Fedora Magazine article](https://fedoramagazine.org/docker-and-fedora-32/) (slightly different - uses moby, stays with nftables)
+- [Blogpost](https://poweruser.blog/how-to-install-docker-on-fedora-32-f2606c6934f1?source=collection_home---5------1-----------------------) (this setup manually)
+
+How to use:
+
+```
+sudo curl -L https://raw.githubusercontent.com/christian-korneck/docker-install/master/install.sh | sh
+```
+
+and reboot
+
+---
+
 # docker/docker-install
 Home of the script that lives at `get.docker.com` and `test.docker.com`!
 
