@@ -421,6 +421,10 @@ do_install() {
 				disable_channel_flag="--set-disabled"
 				pre_reqs="dnf-plugins-core"
 				pkg_suffix="fc$dist_version"
+				if [ "$dist_version" = "32" ]; then
+					pkg_manager_docker_extra_opts="--releasever=31"
+					fedora_modern=1
+				fi
 			else
 				pkg_manager="yum"
 				config_manager="yum-config-manager"
@@ -428,6 +432,7 @@ do_install() {
 				disable_channel_flag="--disable"
 				pre_reqs="yum-utils"
 				pkg_suffix="el"
+				pkg_manager_docker_extra_opts=""
 			fi
 			(
 				if ! is_dry_run; then
@@ -471,9 +476,20 @@ do_install() {
 				fi
 				# install the correct cli version first
 				if [ -n "$cli_pkg_version" ]; then
-					$sh_c "$pkg_manager install -y -q docker-ce-cli-$cli_pkg_version"
+					$sh_c "$pkg_manager install -y -q $pkg_manager_docker_extra_opts docker-ce-cli-$cli_pkg_version"
 				fi
-				$sh_c "$pkg_manager install -y -q docker-ce$pkg_version"
+				$sh_c "$pkg_manager install -y -q $pkg_manager_docker_extra_opts docker-ce$pkg_version"
+				if [ $fedora_modern ]; then
+					$sh_c "$pkg_manager install -y -q grubby"
+					$sh_c "grubby --update-kernel=ALL --args=\"systemd.unified_cgroup_hierarchy=0\""
+					fwcmd="/usr/bin/firewall-cmd"
+					if [ -f "$fwcmd" ]; then
+						$sh_c "sed -i --follow-symlinks \"s|FirewallBackend=nftables|FirewallBackend=iptables|g\" /etc/firewalld/firewalld.conf"
+						$sh_c "$fwcmd --reload"
+						systemctl restart firewalld
+					fi
+					systemctl enable docker.service --now
+				fi
 			)
 			echo_docker_as_nonroot
 			exit 0
